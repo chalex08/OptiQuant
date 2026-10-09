@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Model weights (multi-GB; re-downloadable from Hugging Face)
+models/
+
+# SQLite DB is derived data: rebuild it from results/raw/
+data/
+
+# Scratch llama-bench output; ingest archives it into results/raw/
+bench.json
+
+# Local assistant instructions
+CLAUDE.md
