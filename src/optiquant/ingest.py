@@ -7,7 +7,6 @@ Usage (from the project root):
 
 import argparse
 import json
-import shutil
 import sqlite3
 import sys
 from pathlib import Path
@@ -18,19 +17,32 @@ from optiquant.records import insert_run, parse_record
 RAW_DIR = Path("results/raw")
 
 
-def archive_raw(json_path: Path, records: list[dict], model_family: str, quant: str) -> Path:
-    """Copy the raw JSON into results/raw/ under a deterministic name; return the archive path.
+def read_bench_text(json_path: Path) -> str:
+    """Read llama-bench output whatever encoding the shell wrote it in.
 
-    The name is derived from the run's own timestamp (not "now"), so re-archiving the same run
+    Windows PowerShell 5.1's `>` writes UTF-16 with a BOM; utf-8-sig handles UTF-8 with or
+    without a BOM.
+    """
+    raw = json_path.read_bytes()
+    if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return raw.decode("utf-16")
+    return raw.decode("utf-8-sig")
+
+
+def archive_raw(text: str, records: list[dict], model_family: str, quant: str) -> Path:
+    """Write the raw JSON into results/raw/ as UTF-8 under a deterministic name.
+
+    The content is kept exactly as llama-bench produced it; only the encoding is normalized,
+    so archives are plain text in git regardless of which shell redirected the output.
+    The name comes from the run's own timestamp (not "now"), so re-archiving the same run
     maps to the same file instead of creating a duplicate.
     """
     stamp = records[0]["test_time"].replace("-", "").replace(":", "")
     safe_family = model_family.replace("/", "--")
     dest = RAW_DIR / f"{stamp}_{safe_family}_{quant}.json"
 
-    if json_path.resolve() != dest.resolve():
-        RAW_DIR.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(json_path, dest)
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(text.encode("utf-8"))
     return dest
 
 
@@ -48,18 +60,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH)
     args = parser.parse_args(argv)
 
-    # Windows PowerShell 5.1's `>` writes UTF-16; utf-8-sig handles UTF-8 with or without a BOM.
-    raw = args.json_path.read_bytes()
-    text = (
-        raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8-sig")
-    )
+    text = read_bench_text(args.json_path)
     records = json.loads(text)
     if not records:
         print("No benchmark records in file.", file=sys.stderr)
         return 1
 
     peak_vram_bytes = int(args.peak_vram_mib * 1024**2) if args.peak_vram_mib is not None else None
-    archived = archive_raw(args.json_path, records, args.model_family, args.quant)
+    archived = archive_raw(text, records, args.model_family, args.quant)
 
     conn = connect(args.db)
     try:
