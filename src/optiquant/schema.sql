@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS benchmark_runs (
     model_size_bytes      INTEGER NOT NULL,
     model_n_params        INTEGER NOT NULL,
     quant_method          TEXT NOT NULL,         -- e.g. 'Q4_K_M', 'Q8_0', 'F16'
+    recipe                TEXT NOT NULL          -- human-readable origin of the GGUF file
+        CHECK (recipe IN ('third-party', 'no-imatrix', 'unquantized')
+               OR recipe GLOB 'imatrix-?*'),     -- 'imatrix-<calibration-name>'
+    gguf_sha256           TEXT NOT NULL          -- exact file identity; lowercase hex
+        CHECK (length(gguf_sha256) = 64 AND gguf_sha256 NOT GLOB '*[^0-9a-f]*'),
 
     phase                 TEXT NOT NULL CHECK (phase IN ('prefill', 'decode')),
     n_prompt_tokens       INTEGER NOT NULL,

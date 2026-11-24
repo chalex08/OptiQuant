@@ -7,6 +7,8 @@ def parse_record(
     *,
     model_family: str,
     quant_method: str,
+    recipe: str,
+    gguf_sha256: str,
     source_file: str,
     peak_vram_bytes: int | None = None,
 ) -> dict:
@@ -29,6 +31,8 @@ def parse_record(
         "model_size_bytes": record["model_size"],
         "model_n_params": record["model_n_params"],
         "quant_method": quant_method,
+        "recipe": recipe,
+        "gguf_sha256": gguf_sha256,
         "phase": "prefill" if record["n_prompt"] > 0 else "decode",
         "n_prompt_tokens": record["n_prompt"],
         "n_gen_tokens": record["n_gen"],

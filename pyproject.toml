@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 optiquant-ingest = "optiquant.ingest:main"
+optiquant-calib = "optiquant.calib:main"
 
 [dependency-groups]
 dev = [

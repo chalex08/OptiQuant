@@ -13,6 +13,8 @@ FIXTURE = Path(__file__).parent / "fixtures" / "llama_bench_q4km.json"
 META = {
     "model_family": "Qwen2.5-7B-Instruct",
     "quant_method": "Q4_K_M",
+    "recipe": "third-party",
+    "gguf_sha256": "ab" * 32,
     "source_file": "results/raw/x.json",
 }
 
@@ -108,3 +110,20 @@ def test_same_run_twice_violates_unique_constraint(records, conn):
     insert_run(conn, parse_record(records[0], **META))
     with pytest.raises(sqlite3.IntegrityError):
         insert_run(conn, parse_record(records[0], **META))
+
+
+@pytest.mark.parametrize("recipe", ["third-party", "unquantized", "no-imatrix", "imatrix-calib"])
+def test_valid_recipes_are_accepted(records, conn, recipe):
+    insert_run(conn, parse_record(records[0], **{**META, "recipe": recipe}))
+
+
+@pytest.mark.parametrize("recipe", ["imatrix-", "Imatrix-calib", "imatrix", "custom", ""])
+def test_invalid_recipes_are_rejected(records, conn, recipe):
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_run(conn, parse_record(records[0], **{**META, "recipe": recipe}))
+
+
+@pytest.mark.parametrize("sha", ["ab" * 31, "AB" * 32, "zz" * 32])
+def test_malformed_sha256_is_rejected(records, conn, sha):
+    with pytest.raises(sqlite3.IntegrityError):
+        insert_run(conn, parse_record(records[0], **{**META, "gguf_sha256": sha}))

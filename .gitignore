@@ -12,7 +12,7 @@ wheels/
 # Model weights (multi-GB; re-downloadable from Hugging Face)
 models/
 
-# SQLite DB is derived data: rebuild it from results/raw/
+# Derived or re-downloadable: SQLite DB (rebuild from results/raw/), pinned datasets, calib text
 data/
 
 # Scratch llama-bench output; ingest archives it into results/raw/

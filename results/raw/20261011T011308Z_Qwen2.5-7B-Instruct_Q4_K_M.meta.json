@@ -1,0 +1,8 @@
+{
+  "model_family": "Qwen2.5-7B-Instruct",
+  "quant": "Q4_K_M",
+  "recipe": "third-party",
+  "gguf_file": "qwen2.5-7b-instruct-q4_k_m.gguf",
+  "gguf_sha256": "12b58f67acf14562d19d82ac44ff248c5744e45e6f7a4354e213d0ddad0d2b45",
+  "peak_vram_mib": 4690.0
+}
